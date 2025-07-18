@@ -102,7 +102,7 @@ def build_svg_tree(img, w, h, direction, block_size=12, max_lines=5, line_spacin
 
 # Streamlit UI
 st.set_page_config(page_title="Linear Halftone SVG Generator", layout="wide")
-st.title("線形ハーフトーン変換ツール（モノクロのみ）")
+st.title("線形ハーフトーン変換ツール")
 
 uploaded_file = st.file_uploader("画像をアップロード（.jpg, .png, .bmp）", type=["jpg", "png", "bmp"])
 if uploaded_file:
