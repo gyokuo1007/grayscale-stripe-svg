@@ -29,8 +29,7 @@ def resize_image(img_array, new_size):
 def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1, combine_path=False):
     h, w = img.shape
     svg = ET.Element("svg", xmlns="http://www.w3.org/2000/svg", version="1.1",
-                     width="100%", height="auto", viewBox=f"0 0 {w} {h}",
-                     preserveAspectRatio="xMidYMid meet")
+                     viewBox=f"0 0 {w} {h}", preserveAspectRatio="xMidYMid meet")
     line_buffer = {}
 
     for by in range(0, h, block_size):
@@ -113,18 +112,15 @@ if uploaded_file:
     resized = resize_image(img, (new_w, new_h))
     svg_code = create_stripe_svg(resized, combine_path=combine_path)
 
-    st.subheader("🔍 ストライプSVG プレビュー（自動縮小表示）")
-
-    # Embed SVG inside a responsive container
-    svg_html = f"""
-    <div style="text-align:center; background:white; padding:12px;">
-      <div style="display:inline-block; max-width:100%; height:auto;">
+    st.subheader("🔍 ストライプSVGプレビュー")
+    svg_container = f"""
+    <div style="text-align:center; background:white; padding:12px; border:1px solid #ccc">
+      <div style="max-width:100%; height:auto;">
         {svg_code}
       </div>
     </div>
     """
-
-    components.html(svg_html, height=600)
+    components.html(svg_container, height=600)
 
     st.success("ストライプSVG生成完了")
     st.download_button("SVGをダウンロード", svg_code.encode("utf-8"),
