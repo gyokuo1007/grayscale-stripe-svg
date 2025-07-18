@@ -113,11 +113,11 @@ if uploaded_file:
     resized = resize_image(img, (new_w, new_h))
     svg_code = create_stripe_svg(resized, combine_path=combine_path)
 
-    st.subheader("ストライプSVG プレビュー")
+    st.subheader("SVG プレビュー")
 
-    # Embed SVG inside a responsive container
+    # 左寄せ＋距離調整済みのSVG表示
     svg_html = f"""
-    <div style="text-align:center; background:white; padding:12px;">
+    <div style="text-align:left; background:white; margin-top:-8px; margin-bottom:12px;">
       <div style="display:inline-block; max-width:100%; height:auto;">
         {svg_code}
       </div>
@@ -126,7 +126,8 @@ if uploaded_file:
 
     components.html(svg_html, height=600)
 
-    st.success("ストライプSVG生成完了")
+    # メッセージの距離を短く
+    st.success("ストライプSVG生成完了", icon="✅")
     st.download_button("SVGをダウンロード", svg_code.encode("utf-8"),
                        file_name="stripe_output.svg", mime="image/svg+xml")
     st.code(svg_code, language="xml")
