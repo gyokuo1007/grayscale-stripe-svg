@@ -15,7 +15,7 @@ import numpy as np
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import streamlit as st
-import streamlit.components.v1 as components  # SVGプレビュー用
+import streamlit.components.v1 as components  # SVG表示に使用
 
 def read_image_from_bytes(file_bytes):
     image = Image.open(BytesIO(file_bytes)).convert("L")
@@ -81,6 +81,7 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
     return minidom.parseString(ET.tostring(svg, 'utf-8')).toprettyxml(indent="  ")
 
 # 🎨 Streamlit UI
+st.set_page_config(page_title="Stripe SVG Generator", layout="wide")
 st.title("🎞️ グレースケール → ストライプSVGジェネレータ")
 
 uploaded_file = st.file_uploader("画像をアップロード（.jpg, .png, .bmp）", type=["jpg", "png", "bmp"])
@@ -111,13 +112,15 @@ if uploaded_file:
     resized = resize_image(img, (new_w, new_h))
     svg_code = create_stripe_svg(resized, combine_path=combine_path)
 
-    st.subheader("🔍 ストライプSVGプレビュー")
+    st.subheader("🔍 ストライプSVG プレビュー")
     svg_wrapper = f"""
-    <div style="overflow-x:auto; border:1px solid #ccc; padding:8px; background:white; white-space:nowrap">
-      {svg_code}
+    <div style="display:flex; justify-content:center; padding:12px; background:white; border:1px solid #ccc">
+      <div style="max-width:100%; overflow:auto">
+        {svg_code}
+      </div>
     </div>
     """
-    components.html(svg_wrapper, height=min(new_h + 100, 1000))
+    components.html(svg_wrapper, height=min(new_h + 200, 1200))
 
     st.success("ストライプSVG生成完了")
     st.download_button("SVGをダウンロード", svg_code.encode("utf-8"), file_name="stripe_output.svg", mime="image/svg+xml")
