@@ -95,8 +95,8 @@ if uploaded_file:
     target_h = st.number_input("高さ (px)", min_value=50, max_value=5000, value=h_px)
 
     if lock_aspect:
-        ratio_mode = st.radio("サイズ比維持：", ["幅基準", "高さ基準"], index=0)
-        if ratio_mode == "幅基準":
+        ratio_mode = st.radio("比率維持の基準", ["幅を基準に調整", "高さを基準に調整"], index=0)
+        if ratio_mode == "幅を基準に調整":
             new_w = int(target_w)
             new_h = int(round(target_w / img_ratio))
         else:
@@ -105,6 +105,8 @@ if uploaded_file:
     else:
         new_w = int(target_w)
         new_h = int(target_h)
+
+    st.caption(f"🔧 実際の処理サイズ： {new_w}px × {new_h}px")
 
     resized = resize_image(img, (new_w, new_h))
     svg_code = create_stripe_svg(resized, combine_path=combine_path)
