@@ -83,7 +83,7 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
 
 # Streamlit UI
 st.set_page_config(page_title="Stripe SVG Generator", layout="wide")
-st.title("🎞️ グレースケール → ストライプSVGジェネレータ")
+st.title("🎞️ ストライプSVGジェネレータ")
 
 uploaded_file = st.file_uploader("画像をアップロード（.jpg, .png, .bmp）", type=["jpg", "png", "bmp"])
 if uploaded_file:
