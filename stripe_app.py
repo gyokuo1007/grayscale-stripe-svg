@@ -3,24 +3,26 @@
 # このアプリは、Microsoft Copilotの助言と設計支援を元に構築しました。
 # グレースケール画像をストライプ状のSVGへ変換するWebツールです。
 # オープンソースとして公開しており、改良・派生を歓迎します。
-# 
+#
 # Created by Origami_Gyokuo - 2025
 # Repository: https://github.com/gyokuo1007/grayscale-stripe-svg
 # License: MIT
 # ----------------------------------------------------------
+
 from PIL import Image
+from io import BytesIO
 import numpy as np
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import streamlit as st
 
 def read_image_from_bytes(file_bytes):
-    image = Image.open(file_bytes).convert("L")  # グレースケール化
+    image = Image.open(BytesIO(file_bytes)).convert("L")
     return np.array(image)
 
 def resize_image(img_array, new_size):
     image = Image.fromarray(img_array)
-    resized = image.resize(new_size, Image.Resampling.LANCZOS)  # Pillow流のINTER_AREA的処理
+    resized = image.resize(new_size, Image.Resampling.LANCZOS)
     return np.array(resized)
 
 def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1, combine_path=False):
@@ -70,7 +72,6 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
                     merged.append([x1, x2])
                 else:
                     merged[-1][1] = max(merged[-1][1], x2)
-
             for x1, x2 in merged:
                 ET.SubElement(svg, "line", {
                     "x1": str(x1),
@@ -113,6 +114,6 @@ if uploaded_file:
     resized = resize_image(img, (new_w, new_h))
     svg_code = create_stripe_svg(resized, combine_path=combine_path)
 
-    st.success("✅ ストライプSVG生成完了")
+    st.success("ストライプSVG生成完了")
     st.download_button("SVGをダウンロード", svg_code.encode("utf-8"), file_name="stripe_output.svg", mime="image/svg+xml")
     st.code(svg_code, language="xml")
