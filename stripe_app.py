@@ -64,7 +64,7 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
                 merged[-1][1] = max(merged[-1][1], x2)
         return merged
 
-    # 常にパス結合
+    # パス結合
     path_data = []
     for key in sorted(line_buffer.keys()):
         for x1, x2 in merge_segments(line_buffer[key]):
