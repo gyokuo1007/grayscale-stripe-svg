@@ -30,7 +30,9 @@ def resize_image(img_array, new_size):
 def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1, direction="水平"):
     h, w = img.shape
     svg = ET.Element("svg", xmlns="http://www.w3.org/2000/svg", version="1.1",
-                     width=f"{w}px", height=f"{h}px")  # ✅ 絶対サイズ指定
+                     width="100%", height="auto",  # ✅ Web表示に適した相対サイズ
+                     viewBox=f"0 0 {w} {h}",
+                     preserveAspectRatio="xMidYMid meet")
 
     line_buffer = {}
 
@@ -63,7 +65,6 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
                 merged[-1][1] = max(merged[-1][1], x2)
         return merged
 
-    # 常に path 出力
     path_data = []
     for key in sorted(line_buffer.keys()):
         for x1, x2 in merge_segments(line_buffer[key]):
@@ -91,11 +92,9 @@ if uploaded_file:
     h_px, w_px = img.shape
     img_ratio = w_px / h_px
 
-    # 線の向きセクション
     st.subheader("線の向き")
     direction = st.selectbox("線の向きを選択", ["水平", "垂直"])
 
-    # サイズ設定セクション
     st.subheader("サイズ設定")
     lock_aspect = st.checkbox("縦横比を維持", value=True)
     target_w = st.number_input("幅 (px)", min_value=50, max_value=5000, value=w_px)
