@@ -22,7 +22,7 @@ def read_image_from_bytes(file_bytes):
 
 def resize_image(img_array, new_size):
     image = Image.fromarray(img_array)
-    resized = image.resize(new_size, Image.Resampling.LANCZOS)
+    resized = image.resize(new_size, Image.Resampling.BOX)  # INTER_AREAに近い補間
     return np.array(resized)
 
 def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1, combine_path=False):
@@ -98,10 +98,10 @@ if uploaded_file:
         target_ratio = target_w / target_h
         if img_ratio > target_ratio:
             new_w = int(target_w)
-            new_h = int(target_w / img_ratio)
+            new_h = int(round(target_w / img_ratio))
         else:
             new_h = int(target_h)
-            new_w = int(target_h * img_ratio)
+            new_w = int(round(target_h * img_ratio))
     else:
         new_w = int(target_w)
         new_h = int(target_h)
