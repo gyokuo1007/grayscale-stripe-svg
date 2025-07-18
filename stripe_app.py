@@ -147,7 +147,7 @@ if uploaded_file:
       </div>
     </div>
     """
-    components.html(svg_html, height=600)
+    components.html(svg_html, height=400)
 
     st.markdown("<div style='margin-bottom:24px;'>", unsafe_allow_html=True)
     st.success("SVGデータに変換しました", icon="✅")
