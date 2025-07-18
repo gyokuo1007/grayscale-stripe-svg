@@ -115,19 +115,21 @@ if uploaded_file:
 
     st.subheader("SVG プレビュー")
 
-    # 左寄せ＋距離調整済みのSVG表示
+    # 左寄せ・余白統一のSVG表示
     svg_html = f"""
-    <div style="text-align:left; background:white; margin-top:-8px; margin-bottom:12px;">
+    <div style="text-align:left; background:white; margin-top:16px; margin-bottom:24px;">
       <div style="display:inline-block; max-width:100%; height:auto;">
         {svg_code}
       </div>
     </div>
     """
-
     components.html(svg_html, height=600)
 
-    # メッセージの距離を短く
+    # 上下の余白をSVGと同様に揃える
+    st.markdown("<div style='margin-bottom:24px;'>", unsafe_allow_html=True)
     st.success("ストライプSVG生成完了", icon="✅")
+    st.markdown("</div>", unsafe_allow_html=True)
+
     st.download_button("SVGをダウンロード", svg_code.encode("utf-8"),
                        file_name="stripe_output.svg", mime="image/svg+xml")
     st.code(svg_code, language="xml")
