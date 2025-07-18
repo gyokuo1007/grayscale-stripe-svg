@@ -35,7 +35,7 @@ def resize_image(img_array, new_size):
     resized = image.resize(new_size, Image.Resampling.BOX)
     return np.array(resized)
 
-def build_svg_tree(img, w, h, direction, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1, 
+def build_svg_tree(img, w, h, direction, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1,
                    use_absolute_size=False):
     svg_attrib = {
         "xmlns": "http://www.w3.org/2000/svg",
@@ -102,15 +102,14 @@ def build_svg_tree(img, w, h, direction, block_size=12, max_lines=5, line_spacin
 
 # Streamlit UI
 st.set_page_config(page_title="Linear Halftone SVG Generator", layout="wide")
-st.title("線形ハーフトーン変換ツール")
+st.title("線形ハーフトーン変換ツール（モノクロのみ）")
 
 uploaded_file = st.file_uploader("画像をアップロード（.jpg, .png, .bmp）", type=["jpg", "png", "bmp"])
 if uploaded_file:
-    img = read_image_from_bytes(uploaded_file.read())
-    h_px, w_px = img.shape
+    raw_img = read_image_from_bytes(uploaded_file.read())
+    h_px, w_px = raw_img.shape[:2]
     img_ratio = w_px / h_px
 
-    # 最大5000pxで制限
     w_px = min(w_px, 5000)
     h_px = min(h_px, 5000)
 
@@ -135,7 +134,7 @@ if uploaded_file:
         new_h = int(target_h)
 
     st.caption(f"実際の処理サイズ： {new_w}px × {new_h}px")
-    resized = resize_image(img, (new_w, new_h))
+    resized = resize_image(raw_img, (new_w, new_h))
 
     svg_for_display = build_svg_tree(resized, new_w, new_h, direction, use_absolute_size=False)
     svg_for_download = build_svg_tree(resized, new_w, new_h, direction, use_absolute_size=True)
@@ -149,6 +148,10 @@ if uploaded_file:
     </div>
     """
     components.html(svg_html, height=600)
+
+    st.markdown("<div style='margin-bottom:24px;'>", unsafe_allow_html=True)
+    st.success("SVGデータに変換しました", icon="✅")
+    st.markdown("</div>", unsafe_allow_html=True)
 
     base_name = os.path.splitext(uploaded_file.name)[0]
     output_file_name = f"{base_name}_stripe.svg"
