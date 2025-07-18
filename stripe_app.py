@@ -127,7 +127,7 @@ if uploaded_file:
 
     # 上下の余白をSVGと同様に揃える
     st.markdown("<div style='margin-bottom:24px;'>", unsafe_allow_html=True)
-    st.success("ストライプSVG生成完了", icon="✅")
+    st.success("SVGデータに変換しました", icon="✅")
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.download_button("SVGをダウンロード", svg_code.encode("utf-8"),
