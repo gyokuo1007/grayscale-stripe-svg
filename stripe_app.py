@@ -92,9 +92,13 @@ if uploaded_file:
     h_px, w_px = img.shape
     img_ratio = w_px / h_px
 
+    # 線の向き
+    st.subheader("線の向き")
+    direction = st.selectbox("線の向きを選択", ["水平", "垂直"])
+
+    # サイズ設定
     st.subheader("サイズ設定")
     lock_aspect = st.checkbox("縦横比を維持", value=True)
-    direction = st.selectbox("線の向き", ["水平", "垂直"])
     target_w = st.number_input("幅 (px)", min_value=50, max_value=5000, value=w_px)
     target_h = st.number_input("高さ (px)", min_value=50, max_value=5000, value=h_px)
 
