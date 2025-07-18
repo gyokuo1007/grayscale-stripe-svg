@@ -1,4 +1,15 @@
-
+# stripe_app.py
+# ----------------------------------------------------------
+# このアプリは、Microsoft Copilotの助言と設計支援を元に構築しました。
+# グレースケール画像をストライプ状のSVGへ変換するWebツールです。
+# オープンソースとして公開しており、改良・派生を歓迎します。
+# 
+# Created by Origami_Gyokuo - 2025
+# Repository: https://github.com/gyokuo1007/grayscale-stripe-svg
+# License: MIT
+# ----------------------------------------------------------
+import os
+os.environ['LD_LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu'
 import cv2
 import numpy as np
 import xml.etree.ElementTree as ET
