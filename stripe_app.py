@@ -155,4 +155,3 @@ if uploaded_file:
 
     st.download_button("SVGをダウンロード", svg_for_download.encode("utf-8"),
                        file_name=output_file_name, mime="image/svg+xml")
-    st.code(svg_for_display, language="xml")
