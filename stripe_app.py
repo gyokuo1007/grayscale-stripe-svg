@@ -55,15 +55,6 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
                         break
                     line_buffer.setdefault(x, []).append((by, by + block_size))
 
-                elif direction == "斜め（右下）":
-                    x1 = bx + i * line_spacing
-                    y1 = by
-                    x2 = bx
-                    y2 = by + i * line_spacing
-                    if x1 >= bx + block_size or y2 >= by + block_size:
-                        break
-                    line_buffer.setdefault((x1, y1, x2, y2), []).append(None)  # ダミーで統一
-
     def merge_segments(segments):
         merged = []
         for x1, x2 in sorted(segments):
@@ -73,17 +64,7 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
                 merged[-1][1] = max(merged[-1][1], x2)
         return merged
 
-    if direction == "斜め（右下）":
-        for (x1, y1, x2, y2) in line_buffer.keys():
-            ET.SubElement(svg, "line", {
-                "x1": str(x1),
-                "y1": str(y1),
-                "x2": str(x2),
-                "y2": str(y2),
-                "stroke": "black",
-                "stroke-width": "0.5"
-            })
-    elif combine_path:
+    if combine_path:
         path_data = []
         for key in sorted(line_buffer.keys()):
             for x1, x2 in merge_segments(line_buffer[key]):
@@ -135,7 +116,7 @@ if uploaded_file:
     st.subheader("サイズ設定")
     lock_aspect = st.checkbox("縦横比を維持", value=True)
     combine_path = st.checkbox("パスを結合", value=True)
-    direction = st.selectbox("線の向き", ["水平", "垂直", "斜め（右下）"])
+    direction = st.selectbox("線の向き", ["水平", "垂直"])
     target_w = st.number_input("幅 (px)", min_value=50, max_value=5000, value=w_px)
     target_h = st.number_input("高さ (px)", min_value=50, max_value=5000, value=h_px)
 
