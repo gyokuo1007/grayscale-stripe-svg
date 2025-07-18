@@ -139,7 +139,7 @@ if uploaded_file:
     svg_for_display = build_svg_tree(resized, new_w, new_h, direction, use_absolute_size=False)
     svg_for_download = build_svg_tree(resized, new_w, new_h, direction, use_absolute_size=True)
 
-    st.subheader("SVG プレビュー")
+    st.subheader("プレビュー")
     svg_html = f"""
     <div style="text-align:left; background:white; margin-top:16px; margin-bottom:24px;">
       <div style="display:inline-block; max-width:100%; height:auto;">
