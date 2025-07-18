@@ -91,7 +91,7 @@ if uploaded_file:
     h_px, w_px = img.shape
     img_ratio = w_px / h_px
 
-    st.subheader("📐 サイズ設定")
+    st.subheader("サイズ設定")
     lock_aspect = st.checkbox("縦横比を維持", value=True)
     combine_path = st.checkbox("パスを結合", value=True)
     target_w = st.number_input("幅 (px)", min_value=50, max_value=5000, value=w_px)
@@ -109,11 +109,11 @@ if uploaded_file:
         new_w = int(target_w)
         new_h = int(target_h)
 
-    st.caption(f"🔧 実際の処理サイズ： {new_w}px × {new_h}px")
+    st.caption(f"実際の処理サイズ： {new_w}px × {new_h}px")
     resized = resize_image(img, (new_w, new_h))
     svg_code = create_stripe_svg(resized, combine_path=combine_path)
 
-    st.subheader("🔍 ストライプSVG プレビュー（自動縮小表示）")
+    st.subheader("ストライプSVG プレビュー")
 
     # Embed SVG inside a responsive container
     svg_html = f"""
