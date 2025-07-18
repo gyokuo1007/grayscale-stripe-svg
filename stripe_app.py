@@ -18,7 +18,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 import os
 
-def read_image_from_bytes(file_bytes, mode="モノクロ"):
+def read_image_from_bytes(file_bytes):
     image = Image.open(BytesIO(file_bytes))
     try:
         exif = image._getexif()
@@ -28,18 +28,14 @@ def read_image_from_bytes(file_bytes, mode="モノクロ"):
                 image = ImageOps.exif_transpose(image)
     except Exception:
         pass
-
-    if mode == "モノクロ":
-        return np.array(image.convert("L"))
-    else:
-        return np.array(image.convert("RGB"))
+    return np.array(image.convert("L"))
 
 def resize_image(img_array, new_size):
     image = Image.fromarray(img_array)
     resized = image.resize(new_size, Image.Resampling.BOX)
     return np.array(resized)
 
-def build_svg_tree(img, w, h, direction, mode, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1,
+def build_svg_tree(img, w, h, direction, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1, 
                    use_absolute_size=False):
     svg_attrib = {
         "xmlns": "http://www.w3.org/2000/svg",
@@ -58,62 +54,49 @@ def build_svg_tree(img, w, h, direction, mode, block_size=12, max_lines=5, line_
     svg = ET.Element("svg", svg_attrib)
     line_buffer = {}
 
-    is_color = mode == "カラー"
-
     for by in range(0, h, block_size):
         for bx in range(0, w, block_size):
             block = img[by:by + block_size, bx:bx + block_size]
             if block.size == 0:
                 continue
-
-            # 密度と色の計算
-            if is_color:
-                avg_color = np.mean(block.reshape(-1, 3), axis=0)
-                stroke_color = "#{:02x}{:02x}{:02x}".format(*avg_color.astype(int))
-                gray = int(np.dot(avg_color, [0.2989, 0.5870, 0.1140]))  # 手動で輝度換算
-                density = int(((255 - gray) / 255) * max_lines)
-            else:
-                avg = np.mean(block)
-                density = int(((255 - avg) / 255) * max_lines)
-                stroke_color = "black"
+            avg = np.mean(block)
+            density = int(((255 - avg) / 255) * max_lines)
 
             for i in range(density):
                 if direction == "水平":
                     y = by + i * line_spacing
                     if y >= by + block_size:
                         break
-                    line_buffer.setdefault(y, []).append((bx, bx + block_size, stroke_color))
+                    line_buffer.setdefault(y, []).append((bx, bx + block_size))
                 elif direction == "垂直":
                     x = bx + i * line_spacing
                     if x >= bx + block_size:
                         break
-                    line_buffer.setdefault(x, []).append((by, by + block_size, stroke_color))
+                    line_buffer.setdefault(x, []).append((by, by + block_size))
 
     def merge_segments(segments):
         merged = []
-        for x1, x2, color in sorted(segments):
-            if not merged or x1 > merged[-1][1] + merge_threshold or color != merged[-1][2]:
-                merged.append([x1, x2, color])
+        for x1, x2 in sorted(segments):
+            if not merged or x1 > merged[-1][1] + merge_threshold:
+                merged.append([x1, x2])
             else:
                 merged[-1][1] = max(merged[-1][1], x2)
         return merged
 
+    path_data = []
     for key in sorted(line_buffer.keys()):
-        for x1, x2, color in merge_segments(line_buffer[key]):
+        for x1, x2 in merge_segments(line_buffer[key]):
             if direction == "水平":
-                ET.SubElement(svg, "path", {
-                    "d": f"M {x1} {key} L {x2} {key}",
-                    "stroke": color,
-                    "stroke-width": "0.5",
-                    "fill": "none"
-                })
+                path_data.append(f"M {x1} {key} L {x2} {key}")
             elif direction == "垂直":
-                ET.SubElement(svg, "path", {
-                    "d": f"M {key} {x1} L {key} {x2}",
-                    "stroke": color,
-                    "stroke-width": "0.5",
-                    "fill": "none"
-                })
+                path_data.append(f"M {key} {x1} L {key} {x2}")
+    if path_data:
+        ET.SubElement(svg, "path", {
+            "d": " ".join(path_data),
+            "stroke": "black",
+            "stroke-width": "0.5",
+            "fill": "none"
+        })
 
     return minidom.parseString(ET.tostring(svg, 'utf-8')).toprettyxml(indent="  ")
 
@@ -123,11 +106,8 @@ st.title("線形ハーフトーン変換ツール")
 
 uploaded_file = st.file_uploader("画像をアップロード（.jpg, .png, .bmp）", type=["jpg", "png", "bmp"])
 if uploaded_file:
-    st.subheader("ストライプモードの選択")
-    mode = st.radio("処理モード", ["モノクロ", "カラー"])
-
-    raw_img = read_image_from_bytes(uploaded_file.read(), mode=mode)
-    h_px, w_px = raw_img.shape[:2]
+    img = read_image_from_bytes(uploaded_file.read())
+    h_px, w_px = img.shape
     img_ratio = w_px / h_px
 
     # 最大5000pxで制限
@@ -155,10 +135,10 @@ if uploaded_file:
         new_h = int(target_h)
 
     st.caption(f"実際の処理サイズ： {new_w}px × {new_h}px")
-    resized = resize_image(raw_img, (new_w, new_h))
+    resized = resize_image(img, (new_w, new_h))
 
-    svg_for_display = build_svg_tree(resized, new_w, new_h, direction, mode, use_absolute_size=False)
-    svg_for_download = build_svg_tree(resized, new_w, new_h, direction, mode, use_absolute_size=True)
+    svg_for_display = build_svg_tree(resized, new_w, new_h, direction, use_absolute_size=False)
+    svg_for_download = build_svg_tree(resized, new_w, new_h, direction, use_absolute_size=True)
 
     st.subheader("SVG プレビュー")
     svg_html = f"""
