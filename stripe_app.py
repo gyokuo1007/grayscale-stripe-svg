@@ -9,7 +9,7 @@
 # License: MIT
 # ----------------------------------------------------------
 
-from PIL import Image
+from PIL import Image, ExifTags, ImageOps
 from io import BytesIO
 import numpy as np
 import xml.etree.ElementTree as ET
@@ -19,8 +19,16 @@ import streamlit.components.v1 as components
 import os
 
 def read_image_from_bytes(file_bytes):
-    image = Image.open(BytesIO(file_bytes)).convert("L")
-    return np.array(image)
+    image = Image.open(BytesIO(file_bytes))
+    try:
+        exif = image._getexif()
+        if exif:
+            orientation_key = next(k for k, v in ExifTags.TAGS.items() if v == 'Orientation')
+            if orientation_key in exif:
+                image = ImageOps.exif_transpose(image)
+    except Exception:
+        pass
+    return np.array(image.convert("L"))
 
 def resize_image(img_array, new_size):
     image = Image.fromarray(img_array)
@@ -102,7 +110,7 @@ if uploaded_file:
     h_px, w_px = img.shape
     img_ratio = w_px / h_px
 
-    # ✅ 初期最大値を5000で制限
+    # 最大5000pxで制限
     w_px = min(w_px, 5000)
     h_px = min(h_px, 5000)
 
