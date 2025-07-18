@@ -8,23 +8,25 @@
 # Repository: https://github.com/gyokuo1007/grayscale-stripe-svg
 # License: MIT
 # ----------------------------------------------------------
-import os
-os.environ['LD_LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu'
-import cv2
+from PIL import Image
 import numpy as np
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import streamlit as st
 
 def read_image_from_bytes(file_bytes):
-    img_array = np.frombuffer(file_bytes, np.uint8)
-    return cv2.imdecode(img_array, cv2.IMREAD_GRAYSCALE)
+    image = Image.open(file_bytes).convert("L")  # グレースケール化
+    return np.array(image)
+
+def resize_image(img_array, new_size):
+    image = Image.fromarray(img_array)
+    resized = image.resize(new_size, Image.Resampling.LANCZOS)  # Pillow流のINTER_AREA的処理
+    return np.array(resized)
 
 def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1, combine_path=False):
     h, w = img.shape
     svg = ET.Element("svg", xmlns="http://www.w3.org/2000/svg", version="1.1",
                      width=f"{w}px", height=f"{h}px")
-
     line_buffer = {}
 
     for by in range(0, h, block_size):
@@ -34,7 +36,6 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
                 continue
             avg = np.mean(block)
             density = int(((255 - avg) / 255) * max_lines)
-
             for i in range(density):
                 y = by + i * line_spacing
                 if y >= by + block_size:
@@ -109,9 +110,9 @@ if uploaded_file:
         new_w = int(target_w)
         new_h = int(target_h)
 
-    resized = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    resized = resize_image(img, (new_w, new_h))
     svg_code = create_stripe_svg(resized, combine_path=combine_path)
 
-    st.success("✅ ストライプSVG生成完了！")
+    st.success("✅ ストライプSVG生成完了")
     st.download_button("SVGをダウンロード", svg_code.encode("utf-8"), file_name="stripe_output.svg", mime="image/svg+xml")
     st.code(svg_code, language="xml")
