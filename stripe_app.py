@@ -82,7 +82,6 @@ def build_svg_tree(img, w, h, direction, block_size=12, max_lines=5, line_spacin
                 path_data.append(f"M {x1} {key} L {x2} {key}")
             elif direction == "垂直":
                 path_data.append(f"M {key} {x1} L {key} {x2}")
-
     if path_data:
         ET.SubElement(svg, "path", {
             "d": " ".join(path_data),
@@ -102,6 +101,10 @@ if uploaded_file:
     img = read_image_from_bytes(uploaded_file.read())
     h_px, w_px = img.shape
     img_ratio = w_px / h_px
+
+    # ✅ 初期最大値を5000で制限
+    w_px = min(w_px, 5000)
+    h_px = min(h_px, 5000)
 
     st.subheader("線の向き")
     direction = st.selectbox("線の向きを選択", ["水平", "垂直"])
@@ -126,10 +129,7 @@ if uploaded_file:
     st.caption(f"実際の処理サイズ： {new_w}px × {new_h}px")
     resized = resize_image(img, (new_w, new_h))
 
-    # 表示用（相対サイズ）
     svg_for_display = build_svg_tree(resized, new_w, new_h, direction, use_absolute_size=False)
-
-    # ダウンロード用（絶対サイズ）
     svg_for_download = build_svg_tree(resized, new_w, new_h, direction, use_absolute_size=True)
 
     st.subheader("SVG プレビュー")
