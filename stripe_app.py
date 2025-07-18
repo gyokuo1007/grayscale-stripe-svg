@@ -44,17 +44,19 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
                     break
                 line_buffer.setdefault(y, []).append((bx, bx + block_size))
 
+    def merge_segments(segments):
+        merged = []
+        for x1, x2 in sorted(segments):
+            if not merged or x1 > merged[-1][1] + merge_threshold:
+                merged.append([x1, x2])
+            else:
+                merged[-1][1] = max(merged[-1][1], x2)
+        return merged
+
     if combine_path:
         path_data = []
         for y in sorted(line_buffer.keys()):
-            segments = sorted(line_buffer[y])
-            merged = []
-            for x1, x2 in segments:
-                if not merged or x1 > merged[-1][1] + merge_threshold:
-                    merged.append([x1, x2])
-                else:
-                    merged[-1][1] = max(merged[-1][1], x2)
-            for x1, x2 in merged:
+            for x1, x2 in merge_segments(line_buffer[y]):
                 path_data.append(f"M {x1} {y} L {x2} {y}")
         if path_data:
             ET.SubElement(svg, "path", {
@@ -65,14 +67,7 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
             })
     else:
         for y in sorted(line_buffer.keys()):
-            segments = sorted(line_buffer[y])
-            merged = []
-            for x1, x2 in segments:
-                if not merged or x1 > merged[-1][1] + merge_threshold:
-                    merged.append([x1, x2])
-                else:
-                    merged[-1][1] = max(merged[-1][1], x2)
-            for x1, x2 in merged:
+            for x1, x2 in merge_segments(line_buffer[y]):
                 ET.SubElement(svg, "line", {
                     "x1": str(x1),
                     "y1": str(y),
