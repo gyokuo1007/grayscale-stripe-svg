@@ -83,14 +83,16 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
 st.title("🎞️ グレースケール → ストライプSVGジェネレータ")
 
 uploaded_file = st.file_uploader("画像をアップロード（.jpg, .png, .bmp）", type=["jpg", "png", "bmp"])
-lock_aspect = st.checkbox("縦横比を維持", value=True)
-combine_path = st.checkbox("パスを結合", value=True)
-
 if uploaded_file:
     img = read_image_from_bytes(uploaded_file.read())
     h_px, w_px = img.shape
     img_ratio = w_px / h_px
 
+    st.image(Image.fromarray(img), caption="元画像プレビュー", use_column_width=True)
+
+    st.subheader("📐 サイズ設定")
+    lock_aspect = st.checkbox("縦横比を維持", value=True)
+    combine_path = st.checkbox("パスを結合", value=True)
     target_w = st.number_input("幅 (px)", min_value=50, max_value=5000, value=w_px)
     target_h = st.number_input("高さ (px)", min_value=50, max_value=5000, value=h_px)
 
@@ -107,8 +109,9 @@ if uploaded_file:
         new_h = int(target_h)
 
     st.caption(f"🔧 実際の処理サイズ： {new_w}px × {new_h}px")
-
     resized = resize_image(img, (new_w, new_h))
+    st.image(Image.fromarray(resized), caption="リサイズ後プレビュー", use_column_width=True)
+
     svg_code = create_stripe_svg(resized, combine_path=combine_path)
 
     st.success("ストライプSVG生成完了")
