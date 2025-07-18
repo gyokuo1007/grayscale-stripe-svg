@@ -30,8 +30,8 @@ def resize_image(img_array, new_size):
 def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1, direction="水平"):
     h, w = img.shape
     svg = ET.Element("svg", xmlns="http://www.w3.org/2000/svg", version="1.1",
-                     width="100%", height="auto", viewBox=f"0 0 {w} {h}",
-                     preserveAspectRatio="xMidYMid meet")
+                     width=f"{w}px", height=f"{h}px")  # ✅ 絶対サイズ指定
+
     line_buffer = {}
 
     for by in range(0, h, block_size):
@@ -48,7 +48,6 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
                     if y >= by + block_size:
                         break
                     line_buffer.setdefault(y, []).append((bx, bx + block_size))
-
                 elif direction == "垂直":
                     x = bx + i * line_spacing
                     if x >= bx + block_size:
@@ -64,7 +63,7 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
                 merged[-1][1] = max(merged[-1][1], x2)
         return merged
 
-    # パス結合
+    # 常に path 出力
     path_data = []
     for key in sorted(line_buffer.keys()):
         for x1, x2 in merge_segments(line_buffer[key]):
@@ -92,11 +91,11 @@ if uploaded_file:
     h_px, w_px = img.shape
     img_ratio = w_px / h_px
 
-    # 線の向き
+    # 線の向きセクション
     st.subheader("線の向き")
     direction = st.selectbox("線の向きを選択", ["水平", "垂直"])
 
-    # サイズ設定
+    # サイズ設定セクション
     st.subheader("サイズ設定")
     lock_aspect = st.checkbox("縦横比を維持", value=True)
     target_w = st.number_input("幅 (px)", min_value=50, max_value=5000, value=w_px)
@@ -118,7 +117,7 @@ if uploaded_file:
     resized = resize_image(img, (new_w, new_h))
     svg_code = create_stripe_svg(resized, direction=direction)
 
-    st.subheader("プレビュー")
+    st.subheader("SVG プレビュー")
     svg_html = f"""
     <div style="text-align:left; background:white; margin-top:16px; margin-bottom:24px;">
       <div style="display:inline-block; max-width:100%; height:auto;">
@@ -129,7 +128,7 @@ if uploaded_file:
     components.html(svg_html, height=600)
 
     st.markdown("<div style='margin-bottom:24px;'>", unsafe_allow_html=True)
-    st.success("SVGデータに変換しました", icon="✅")
+    st.success("SVGデータに変換しました")
     st.markdown("</div>", unsafe_allow_html=True)
 
     base_name = os.path.splitext(uploaded_file.name)[0]
