@@ -89,8 +89,6 @@ if uploaded_file:
     h_px, w_px = img.shape
     img_ratio = w_px / h_px
 
-    st.image(Image.fromarray(img), caption="元画像プレビュー", use_column_width=True)
-
     st.subheader("📐 サイズ設定")
     lock_aspect = st.checkbox("縦横比を維持", value=True)
     combine_path = st.checkbox("パスを結合", value=True)
@@ -110,14 +108,16 @@ if uploaded_file:
         new_h = int(target_h)
 
     st.caption(f"🔧 実際の処理サイズ： {new_w}px × {new_h}px")
-
     resized = resize_image(img, (new_w, new_h))
-    st.image(Image.fromarray(resized), caption="リサイズ後プレビュー", use_column_width=True)
-
     svg_code = create_stripe_svg(resized, combine_path=combine_path)
 
     st.subheader("🔍 ストライプSVG プレビュー")
-    components.html(f"<div style='background:white'>{svg_code}</div>", height=new_h + 50)
+    svg_wrapper = f"""
+    <div style="overflow-x:auto; border:1px solid #ddd; padding:8px; background:white">
+      {svg_code}
+    </div>
+    """
+    components.html(svg_wrapper, height=min(new_h + 80, 800))
 
     st.success("ストライプSVG生成完了")
     st.download_button("SVGをダウンロード", svg_code.encode("utf-8"), file_name="stripe_output.svg", mime="image/svg+xml")
