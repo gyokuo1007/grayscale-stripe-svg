@@ -15,7 +15,7 @@ import numpy as np
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import streamlit as st
-import streamlit.components.v1 as components  # SVG表示に使用
+import streamlit.components.v1 as components  # SVGプレビュー用
 
 def read_image_from_bytes(file_bytes):
     image = Image.open(BytesIO(file_bytes)).convert("L")
@@ -111,13 +111,13 @@ if uploaded_file:
     resized = resize_image(img, (new_w, new_h))
     svg_code = create_stripe_svg(resized, combine_path=combine_path)
 
-    st.subheader("🔍 ストライプSVG プレビュー")
+    st.subheader("🔍 ストライプSVGプレビュー")
     svg_wrapper = f"""
-    <div style="overflow-x:auto; border:1px solid #ddd; padding:8px; background:white">
+    <div style="overflow-x:auto; border:1px solid #ccc; padding:8px; background:white; white-space:nowrap">
       {svg_code}
     </div>
     """
-    components.html(svg_wrapper, height=min(new_h + 80, 800))
+    components.html(svg_wrapper, height=min(new_h + 100, 1000))
 
     st.success("ストライプSVG生成完了")
     st.download_button("SVGをダウンロード", svg_code.encode("utf-8"), file_name="stripe_output.svg", mime="image/svg+xml")
