@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import streamlit as st
 import streamlit.components.v1 as components
-import os  # ファイル名取得のため
+import os
 
 def read_image_from_bytes(file_bytes):
     image = Image.open(BytesIO(file_bytes)).convert("L")
@@ -27,7 +27,7 @@ def resize_image(img_array, new_size):
     resized = image.resize(new_size, Image.Resampling.BOX)
     return np.array(resized)
 
-def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1, combine_path=False):
+def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1, combine_path=False, direction="水平"):
     h, w = img.shape
     svg = ET.Element("svg", xmlns="http://www.w3.org/2000/svg", version="1.1",
                      width="100%", height="auto", viewBox=f"0 0 {w} {h}",
@@ -41,11 +41,28 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
                 continue
             avg = np.mean(block)
             density = int(((255 - avg) / 255) * max_lines)
+
             for i in range(density):
-                y = by + i * line_spacing
-                if y >= by + block_size:
-                    break
-                line_buffer.setdefault(y, []).append((bx, bx + block_size))
+                if direction == "水平":
+                    y = by + i * line_spacing
+                    if y >= by + block_size:
+                        break
+                    line_buffer.setdefault(y, []).append((bx, bx + block_size))
+
+                elif direction == "垂直":
+                    x = bx + i * line_spacing
+                    if x >= bx + block_size:
+                        break
+                    line_buffer.setdefault(x, []).append((by, by + block_size))
+
+                elif direction == "斜め（右下）":
+                    x1 = bx + i * line_spacing
+                    y1 = by
+                    x2 = bx
+                    y2 = by + i * line_spacing
+                    if x1 >= bx + block_size or y2 >= by + block_size:
+                        break
+                    line_buffer.setdefault((x1, y1, x2, y2), []).append(None)  # ダミーで統一
 
     def merge_segments(segments):
         merged = []
@@ -56,11 +73,24 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
                 merged[-1][1] = max(merged[-1][1], x2)
         return merged
 
-    if combine_path:
+    if direction == "斜め（右下）":
+        for (x1, y1, x2, y2) in line_buffer.keys():
+            ET.SubElement(svg, "line", {
+                "x1": str(x1),
+                "y1": str(y1),
+                "x2": str(x2),
+                "y2": str(y2),
+                "stroke": "black",
+                "stroke-width": "0.5"
+            })
+    elif combine_path:
         path_data = []
-        for y in sorted(line_buffer.keys()):
-            for x1, x2 in merge_segments(line_buffer[y]):
-                path_data.append(f"M {x1} {y} L {x2} {y}")
+        for key in sorted(line_buffer.keys()):
+            for x1, x2 in merge_segments(line_buffer[key]):
+                if direction == "水平":
+                    path_data.append(f"M {x1} {key} L {x2} {key}")
+                elif direction == "垂直":
+                    path_data.append(f"M {key} {x1} L {key} {x2}")
         if path_data:
             ET.SubElement(svg, "path", {
                 "d": " ".join(path_data),
@@ -69,16 +99,26 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
                 "fill": "none"
             })
     else:
-        for y in sorted(line_buffer.keys()):
-            for x1, x2 in merge_segments(line_buffer[y]):
-                ET.SubElement(svg, "line", {
-                    "x1": str(x1),
-                    "y1": str(y),
-                    "x2": str(x2),
-                    "y2": str(y),
-                    "stroke": "black",
-                    "stroke-width": "0.5"
-                })
+        for key in sorted(line_buffer.keys()):
+            for x1, x2 in merge_segments(line_buffer[key]):
+                if direction == "水平":
+                    ET.SubElement(svg, "line", {
+                        "x1": str(x1),
+                        "y1": str(key),
+                        "x2": str(x2),
+                        "y2": str(key),
+                        "stroke": "black",
+                        "stroke-width": "0.5"
+                    })
+                elif direction == "垂直":
+                    ET.SubElement(svg, "line", {
+                        "x1": str(key),
+                        "y1": str(x1),
+                        "x2": str(key),
+                        "y2": str(x2),
+                        "stroke": "black",
+                        "stroke-width": "0.5"
+                    })
 
     return minidom.parseString(ET.tostring(svg, 'utf-8')).toprettyxml(indent="  ")
 
@@ -95,6 +135,7 @@ if uploaded_file:
     st.subheader("サイズ設定")
     lock_aspect = st.checkbox("縦横比を維持", value=True)
     combine_path = st.checkbox("パスを結合", value=True)
+    direction = st.selectbox("線の向き", ["水平", "垂直", "斜め（右下）"])
     target_w = st.number_input("幅 (px)", min_value=50, max_value=5000, value=w_px)
     target_h = st.number_input("高さ (px)", min_value=50, max_value=5000, value=h_px)
 
@@ -112,7 +153,7 @@ if uploaded_file:
 
     st.caption(f"実際の処理サイズ： {new_w}px × {new_h}px")
     resized = resize_image(img, (new_w, new_h))
-    svg_code = create_stripe_svg(resized, combine_path=combine_path)
+    svg_code = create_stripe_svg(resized, combine_path=combine_path, direction=direction)
 
     st.subheader("SVG プレビュー")
     svg_html = f"""
@@ -128,7 +169,6 @@ if uploaded_file:
     st.success("SVGデータに変換しました", icon="✅")
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # 元ファイル名 + "_stripe" を構築
     base_name = os.path.splitext(uploaded_file.name)[0]
     output_file_name = f"{base_name}_stripe.svg"
 
