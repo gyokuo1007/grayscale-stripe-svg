@@ -16,6 +16,7 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import streamlit as st
 import streamlit.components.v1 as components
+import os  # ファイル名取得のため
 
 def read_image_from_bytes(file_bytes):
     image = Image.open(BytesIO(file_bytes)).convert("L")
@@ -114,8 +115,6 @@ if uploaded_file:
     svg_code = create_stripe_svg(resized, combine_path=combine_path)
 
     st.subheader("SVG プレビュー")
-
-    # 左寄せ・余白統一のSVG表示
     svg_html = f"""
     <div style="text-align:left; background:white; margin-top:16px; margin-bottom:24px;">
       <div style="display:inline-block; max-width:100%; height:auto;">
@@ -125,11 +124,14 @@ if uploaded_file:
     """
     components.html(svg_html, height=600)
 
-    # 上下の余白をSVGと同様に揃える
     st.markdown("<div style='margin-bottom:24px;'>", unsafe_allow_html=True)
     st.success("SVGデータに変換しました", icon="✅")
     st.markdown("</div>", unsafe_allow_html=True)
 
+    # 元ファイル名 + "_stripe" を構築
+    base_name = os.path.splitext(uploaded_file.name)[0]
+    output_file_name = f"{base_name}_stripe.svg"
+
     st.download_button("SVGをダウンロード", svg_code.encode("utf-8"),
-                       file_name="stripe_output.svg", mime="image/svg+xml")
+                       file_name=output_file_name, mime="image/svg+xml")
     st.code(svg_code, language="xml")
