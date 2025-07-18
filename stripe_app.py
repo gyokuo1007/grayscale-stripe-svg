@@ -118,7 +118,7 @@ if uploaded_file:
     resized = resize_image(img, (new_w, new_h))
     svg_code = create_stripe_svg(resized, direction=direction)
 
-    st.subheader("SVG プレビュー")
+    st.subheader("プレビュー")
     svg_html = f"""
     <div style="text-align:left; background:white; margin-top:16px; margin-bottom:24px;">
       <div style="display:inline-block; max-width:100%; height:auto;">
