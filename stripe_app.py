@@ -27,13 +27,23 @@ def resize_image(img_array, new_size):
     resized = image.resize(new_size, Image.Resampling.BOX)
     return np.array(resized)
 
-def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1, direction="水平"):
-    h, w = img.shape
-    svg = ET.Element("svg", xmlns="http://www.w3.org/2000/svg", version="1.1",
-                     width="100%", height="auto",  # ✅ Web表示に適した相対サイズ
-                     viewBox=f"0 0 {w} {h}",
-                     preserveAspectRatio="xMidYMid meet")
+def build_svg_tree(img, w, h, direction, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1, 
+                   use_absolute_size=False):
+    svg_attrib = {
+        "xmlns": "http://www.w3.org/2000/svg",
+        "version": "1.1"
+    }
 
+    if use_absolute_size:
+        svg_attrib["width"] = f"{w}px"
+        svg_attrib["height"] = f"{h}px"
+    else:
+        svg_attrib["width"] = "100%"
+        svg_attrib["height"] = "auto"
+        svg_attrib["viewBox"] = f"0 0 {w} {h}"
+        svg_attrib["preserveAspectRatio"] = "xMidYMid meet"
+
+    svg = ET.Element("svg", svg_attrib)
     line_buffer = {}
 
     for by in range(0, h, block_size):
@@ -72,6 +82,7 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
                 path_data.append(f"M {x1} {key} L {x2} {key}")
             elif direction == "垂直":
                 path_data.append(f"M {key} {x1} L {key} {x2}")
+
     if path_data:
         ET.SubElement(svg, "path", {
             "d": " ".join(path_data),
@@ -114,25 +125,28 @@ if uploaded_file:
 
     st.caption(f"実際の処理サイズ： {new_w}px × {new_h}px")
     resized = resize_image(img, (new_w, new_h))
-    svg_code = create_stripe_svg(resized, direction=direction)
+
+    # 表示用（相対サイズ）
+    svg_for_display = build_svg_tree(resized, new_w, new_h, direction, use_absolute_size=False)
+
+    # ダウンロード用（絶対サイズ）
+    svg_for_download = build_svg_tree(resized, new_w, new_h, direction, use_absolute_size=True)
 
     st.subheader("SVG プレビュー")
     svg_html = f"""
     <div style="text-align:left; background:white; margin-top:16px; margin-bottom:24px;">
       <div style="display:inline-block; max-width:100%; height:auto;">
-        {svg_code}
+        {svg_for_display}
       </div>
     </div>
     """
     components.html(svg_html, height=600)
 
-    st.markdown("<div style='margin-bottom:24px;'>", unsafe_allow_html=True)
-    st.success("SVGデータに変換しました")
-    st.markdown("</div>", unsafe_allow_html=True)
-
     base_name = os.path.splitext(uploaded_file.name)[0]
     output_file_name = f"{base_name}_stripe.svg"
 
-    st.download_button("SVGをダウンロード", svg_code.encode("utf-8"),
+    st.download_button("SVGをダウンロード", svg_for_download.encode("utf-8"),
                        file_name=output_file_name, mime="image/svg+xml")
-    st.code(svg_code, language="xml")
+
+    st.subheader("SVGコード表示（プレビュー用）")
+    st.code(svg_for_display, language="xml")
