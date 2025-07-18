@@ -15,7 +15,7 @@ import numpy as np
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import streamlit as st
-import streamlit.components.v1 as components  # SVG表示に使用
+import streamlit.components.v1 as components
 
 def read_image_from_bytes(file_bytes):
     image = Image.open(BytesIO(file_bytes)).convert("L")
@@ -29,7 +29,8 @@ def resize_image(img_array, new_size):
 def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1, combine_path=False):
     h, w = img.shape
     svg = ET.Element("svg", xmlns="http://www.w3.org/2000/svg", version="1.1",
-                     width=f"{w}px", height=f"{h}px")
+                     width="100%", height="auto", viewBox=f"0 0 {w} {h}",
+                     preserveAspectRatio="xMidYMid meet")
     line_buffer = {}
 
     for by in range(0, h, block_size):
@@ -80,7 +81,7 @@ def create_stripe_svg(img, block_size=12, max_lines=5, line_spacing=1, merge_thr
 
     return minidom.parseString(ET.tostring(svg, 'utf-8')).toprettyxml(indent="  ")
 
-# 🎨 Streamlit UI
+# Streamlit UI
 st.set_page_config(page_title="Stripe SVG Generator", layout="wide")
 st.title("🎞️ グレースケール → ストライプSVGジェネレータ")
 
@@ -112,16 +113,20 @@ if uploaded_file:
     resized = resize_image(img, (new_w, new_h))
     svg_code = create_stripe_svg(resized, combine_path=combine_path)
 
-    st.subheader("🔍 ストライプSVG プレビュー")
-    svg_wrapper = f"""
-    <div style="display:flex; justify-content:center; padding:12px; background:white; border:1px solid #ccc">
-      <div style="max-width:100%; overflow:auto">
+    st.subheader("🔍 ストライプSVG プレビュー（自動縮小表示）")
+
+    # Embed SVG inside a responsive container
+    svg_html = f"""
+    <div style="text-align:center; background:white; padding:12px;">
+      <div style="display:inline-block; max-width:100%; height:auto;">
         {svg_code}
       </div>
     </div>
     """
-    components.html(svg_wrapper, height=min(new_h + 200, 1200))
+
+    components.html(svg_html, height=600)
 
     st.success("ストライプSVG生成完了")
-    st.download_button("SVGをダウンロード", svg_code.encode("utf-8"), file_name="stripe_output.svg", mime="image/svg+xml")
+    st.download_button("SVGをダウンロード", svg_code.encode("utf-8"),
+                       file_name="stripe_output.svg", mime="image/svg+xml")
     st.code(svg_code, language="xml")
