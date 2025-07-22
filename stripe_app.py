@@ -126,13 +126,13 @@ if uploaded_file:
     st.subheader("サイズ設定")
     lock_aspect = st.checkbox("縦横比を維持", value=True)
     if lock_aspect:
-        ratio_mode = st.selectbox("サイズ調整の基準", ["幅を基準に調整", "高さを基準に調整"], index=0)
+        ratio_mode = st.selectbox("サイズ調整の基準", ["幅", "高さ"], index=0)
 
     target_w = st.number_input("幅 (px)", min_value=50, max_value=5000, value=w_px)
     target_h = st.number_input("高さ (px)", min_value=50, max_value=5000, value=h_px)
 
     if lock_aspect:
-        if ratio_mode == "幅を基準に調整":
+        if ratio_mode == "幅":
             new_w = int(target_w)
             new_h = int(round(target_w / img_ratio))
         else:
