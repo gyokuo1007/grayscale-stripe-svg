@@ -42,7 +42,7 @@ def apply_tone_adjustments(img_array, gamma=1.0):
 def build_svg_tree(img, w, h, direction, block_size=12, max_lines=5,
                    line_spacing=1, merge_threshold=1,
                    use_absolute_size=False, contrast_strength=1.0):
-    
+
     svg_attrib = {
         "xmlns": "http://www.w3.org/2000/svg",
         "version": "1.1"
@@ -125,11 +125,13 @@ if uploaded_file:
 
     st.subheader("サイズ設定")
     lock_aspect = st.checkbox("縦横比を維持", value=True)
+    if lock_aspect:
+        ratio_mode = st.selectbox("サイズ調整の基準", ["幅を基準に調整", "高さを基準に調整"], index=0)
+
     target_w = st.number_input("幅 (px)", min_value=50, max_value=5000, value=w_px)
     target_h = st.number_input("高さ (px)", min_value=50, max_value=5000, value=h_px)
 
     if lock_aspect:
-        ratio_mode = st.radio("比率維持の基準", ["幅を基準に調整", "高さを基準に調整"], index=0)
         if ratio_mode == "幅を基準に調整":
             new_w = int(target_w)
             new_h = int(round(target_w / img_ratio))
@@ -152,7 +154,7 @@ if uploaded_file:
     svg_for_display = build_svg_tree(adjusted_img, new_w, new_h, direction,
                                      use_absolute_size=False,
                                      contrast_strength=contrast_strength)
-    
+
     svg_for_download = build_svg_tree(adjusted_img, new_w, new_h, direction,
                                       use_absolute_size=True,
                                       contrast_strength=contrast_strength)
