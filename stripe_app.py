@@ -35,8 +35,14 @@ def resize_image(img_array, new_size):
     resized = image.resize(new_size, Image.Resampling.BOX)
     return np.array(resized)
 
-def build_svg_tree(img, w, h, direction, block_size=12, max_lines=5, line_spacing=1, merge_threshold=1,
-                   use_absolute_size=False):
+def apply_tone_adjustments(img_array, gamma=1.0):
+    adjusted = np.power(img_array / 255.0, gamma) * 255
+    return np.clip(adjusted, 0, 255).astype(np.uint8)
+
+def build_svg_tree(img, w, h, direction, block_size=12, max_lines=5,
+                   line_spacing=1, merge_threshold=1,
+                   use_absolute_size=False, contrast_strength=1.0):
+    
     svg_attrib = {
         "xmlns": "http://www.w3.org/2000/svg",
         "version": "1.1"
@@ -60,7 +66,8 @@ def build_svg_tree(img, w, h, direction, block_size=12, max_lines=5, line_spacin
             if block.size == 0:
                 continue
             avg = np.mean(block)
-            density = int(((255 - avg) / 255) * max_lines)
+            density = int(((255 - avg) / 255 * contrast_strength) * max_lines)
+            density = np.clip(density, 0, max_lines)
 
             for i in range(density):
                 if direction == "水平":
@@ -136,8 +143,19 @@ if uploaded_file:
     st.caption(f"実際の処理サイズ： {new_w}px × {new_h}px")
     resized = resize_image(raw_img, (new_w, new_h))
 
-    svg_for_display = build_svg_tree(resized, new_w, new_h, direction, use_absolute_size=False)
-    svg_for_download = build_svg_tree(resized, new_w, new_h, direction, use_absolute_size=True)
+    st.subheader("調整オプション")
+    contrast_strength = st.slider("コントラスト強度", min_value=0.1, max_value=3.0, value=1.0, step=0.1)
+    gamma_value = st.slider("ガンマ補正", min_value=0.1, max_value=3.0, value=1.0, step=0.1)
+
+    adjusted_img = apply_tone_adjustments(resized, gamma=gamma_value)
+
+    svg_for_display = build_svg_tree(adjusted_img, new_w, new_h, direction,
+                                     use_absolute_size=False,
+                                     contrast_strength=contrast_strength)
+    
+    svg_for_download = build_svg_tree(adjusted_img, new_w, new_h, direction,
+                                      use_absolute_size=True,
+                                      contrast_strength=contrast_strength)
 
     st.subheader("プレビュー")
     svg_html = f"""
